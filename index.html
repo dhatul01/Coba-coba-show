@@ -26,7 +26,7 @@
         <!-- Header -->
         <div class="text-center mb-8">
             <h1 class="text-3xl font-bold text-gray-800 tracking-tight">Show Manager Realtime</h1>
-            <p class="text-gray-600 italic">Database Lokal: Link akan terhapus otomatis setelah disalin</p>
+            <p class="text-gray-600 italic text-sm">Satu Sandi Per Sesi Show - Link Terhapus Otomatis</p>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -48,9 +48,15 @@
                                 <option value="Pajama Drive">Pajama Drive</option>
                             </select>
                         </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Target Tanggal</label>
-                            <input type="date" id="adminDate" class="w-full p-2 text-sm border border-gray-200 rounded-lg outline-none bg-white">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Target Tanggal</label>
+                                <input type="date" id="adminDate" class="w-full p-2 text-sm border border-gray-200 rounded-lg outline-none bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Sandi Replay</label>
+                                <input type="text" id="adminPass" class="w-full p-2 text-sm border border-gray-200 rounded-lg outline-none bg-white" placeholder="SmeT12">
+                            </div>
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Input Link (Pisah per baris)</label>
@@ -60,7 +66,7 @@
                             onclick="addLinksToDatabase()"
                             class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg text-sm font-bold transition-all shadow-lg"
                         >
-                            Tambah ke Database
+                            Update Database
                         </button>
                     </div>
 
@@ -76,7 +82,7 @@
                             onclick="hardResetDatabase()"
                             class="w-full bg-orange-50 hover:bg-orange-100 text-orange-700 py-2 rounded-lg text-xs font-semibold transition-all border border-orange-200"
                         >
-                            🔄 Reset ke Data Default (JKT48)
+                            🔄 Reset ke Data Default
                         </button>
                     </div>
                 </div>
@@ -144,8 +150,8 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Sandi Replay</label>
-                            <input type="text" id="inPass" oninput="updatePreview()" class="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="8Ramun3">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Sandi Replay (Otomatis/Manual)</label>
+                            <input type="text" id="inPass" oninput="updatePreview()" class="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Masukkan sandi...">
                         </div>
                     </div>
                 </div>
@@ -178,103 +184,111 @@
     </div>
 
     <script>
-        const STORAGE_KEY = "show_manager_links_persistent_v2";
+        const STORAGE_KEY = "show_manager_links_persistent_v5";
         const REPLAY_BASE_URL = "https://48realtime.github.io/Replay-Show/";
         
-        // Data Default (Konfigurasi JKT48)
+        // Data Default Terupdate (Berdasarkan jadwal yang Anda kirim)
         const initialLinks = {
-            "Sambil Menggandeng Erat Tanganku|2026-02-12": [
-                "https://play.realtime48s.my.id/#dESIHmCyA6l5Z9k7ZGtP",
-                "https://play.realtime48s.my.id/#K4tlp9smPQSgpcPlMRzR",
-                "https://play.realtime48s.my.id/#fnT3tMHkJYUYXnauVDEP",
-                "https://play.realtime48s.my.id/#4AU2Xa8j3mdbBmEDZTup",
-                "https://play.realtime48s.my.id/#dNvIIZHc0EBkbkue8LAv",
-                "https://play.realtime48s.my.id/#zlcfm8s8iYMDiFg4Kpyo",
-                "https://play.realtime48s.my.id/#ZYqgK8khxT3lUktLBNcV",
-                "https://play.realtime48s.my.id/#vhWM7wJriATYOEtx9sM6",
-                "https://play.realtime48s.my.id/#tyLqrDcaZ9fXLHjh9GFF",
-                "https://play.realtime48s.my.id/#XCAlVcrBJq8Jany2aqHj"
-            ],
-            "Pertaruhan Cinta|2026-02-13": [
-                "https://play.realtime48s.my.id/#hUEx93EqAOPHVDYY80tR",
-                "https://play.realtime48s.my.id/#xoSRBVyUiUz1CquXMfb8",
-                "https://play.realtime48s.my.id/#BJxuzlCBAFabkckVfDCl",
-                "https://play.realtime48s.my.id/#opFpLac0Z4hpLInRZMy0",
-                "https://play.realtime48s.my.id/#nJcw1odAzGX8e0YV2eyc",
-                "https://play.realtime48s.my.id/#OPPV6EipaoH5g85crnVW",
-                "https://play.realtime48s.my.id/#CfC2yyJA09OwWgmc3mBD",
-                "https://play.realtime48s.my.id/#ED8eNVg7cgqKYwdZzhaK",
-                "https://play.realtime48s.my.id/#H9yHaL5sgvU9XZUP0MOn",
-                "https://play.realtime48s.my.id/#KmKLLHvS7v71G46behV7",
-                "https://play.realtime48s.my.id/#Kh7aVU59sWQPNVHRLFFF",
-                "https://play.realtime48s.my.id/#AQaDEP0BEd03l6pL6QrD",
-                "https://play.realtime48s.my.id/#HulUBgqAWHnYh0FgGonD",
-                "https://play.realtime48s.my.id/#0mEIAWzP4STwZBCAWeZi",
-                "https://play.realtime48s.my.id/#93HuLQtgptHnf97gk5zq"
-            ],
-            "Sambil Menggandeng Erat Tanganku|2026-02-14": [
-                "https://play.realtime48s.my.id/#T6VMrSuBCWqajeuH6IHj",
-                "https://play.realtime48s.my.id/#uYQerXD9PyPDtylby9qx",
-                "https://play.realtime48s.my.id/#4Kms4NIvLRHuuM8Wtq62",
-                "https://play.realtime48s.my.id/#FaLepyMJZGOGrlx7qUl0",
-                "https://play.realtime48s.my.id/#2NFV78hTSiY0JeE6kGjX",
-                "https://play.realtime48s.my.id/#1wbPrWB5kOfYD61ft9sh",
-                "https://play.realtime48s.my.id/#GAs7eJv8Q3TF93VA4LPF"
-            ],
-            "Pertaruhan Cinta|2026-02-15": [
-                "https://play.realtime48s.my.id/#oDEl5TzFA5BP42J0emaT",
-                "https://play.realtime48s.my.id/#YGzpmvW4WEf7l5jXmnOt",
-                "https://play.realtime48s.my.id/#y2F3TNjSPyLCrvA62cgL",
-                "https://play.realtime48s.my.id/#EQuFujeG590fIRS9BKC1",
-                "https://play.realtime48s.my.id/#9E3X4sUUZDdNv4k5Dp8Q",
-                "https://play.realtime48s.my.id/#9PbBaIZxE1A5SmVDuDVF",
-                "https://play.realtime48s.my.id/#McXEjAl1LxsIRE1GD73d",
-                "https://play.realtime48s.my.id/#15B2N4V9PBNEY6R3VEcS",
-                "https://play.realtime48s.my.id/#Riv3rBqfqhsB1kKeOfh9",
-                "https://play.realtime48s.my.id/#nZ7TSyB4ipCrxRGPpa08",
-                "https://play.realtime48s.my.id/#W71P2EpTr6eNS5NtaO0I",
-                "https://play.realtime48s.my.id/#SVuwybtp58GE7pox2i0w",
-                "https://play.realtime48s.my.id/#gLXiyy1XN0OG9rfvF6vK",
-                "https://play.realtime48s.my.id/#YpHqLsrfRP7XecyG3Szu"
-            ],
-            "Cara Meminum Ramune|2026-02-16": [
-                "https://play.realtime48s.my.id/#iGoLJ2ci8hqzpSxvYc3F",
-                "https://play.realtime48s.my.id/#vtseMW1ubyDT5dOeOIBS",
-                "https://play.realtime48s.my.id/#A1tLJDartBManhCbJDEE",
-                "https://play.realtime48s.my.id/#7lpMIW6LrFVyPoGygsWE",
-                "https://play.realtime48s.my.id/#FyrkgWXXQnrXffhr3Qe4",
-                "https://play.realtime48s.my.id/#9g1BeZZt1ExAgerXPAp7",
-                "https://play.realtime48s.my.id/#DZjIZKxzdt5HtWd9mYF0",
-                "https://play.realtime48s.my.id/#N7iLz7KKxnSxbNTLBH6C",
-                "https://play.realtime48s.my.id/#zX8tVgHWn3wI8c0aDbL4",
-                "https://play.realtime48s.my.id/#BJ0clwg9ErNeqseISJyU",
-                "https://play.realtime48s.my.id/#UfzgiYpZ2xwyypg0umtz",
-                "https://play.realtime48s.my.id/#CDjygYuKHAoLpDu33gTq",
-                "https://play.realtime48s.my.id/#7puIizyNXw0T5w21uE3R",
-                "https://play.realtime48s.my.id/#vF6pBu0L2WIUgSqNVB5H",
-                "https://play.realtime48s.my.id/#bWM9WdWZZ90Uur493cHB",
-                "https://play.realtime48s.my.id/#0tcdlZk4LWVLgoRkvHDk"
-            ]
+            "Sambil Menggandeng Erat Tanganku|2026-02-12": {
+                links: [
+                    "https://play.realtime48s.my.id/#K4tlp9smPQSgpcPlMRzR",
+                    "https://play.realtime48s.my.id/#fnT3tMHkJYUYXnauVDEP",
+                    "https://play.realtime48s.my.id/#4AU2Xa8j3mdbBmEDZTup",
+                    "https://play.realtime48s.my.id/#ZYqgK8khxT3lUktLBNcV",
+                    "https://play.realtime48s.my.id/#vhWM7wJriATYOEtx9sM6",
+                    "https://play.realtime48s.my.id/#tyLqrDcaZ9fXLHjh9GFF",
+                    "https://play.realtime48s.my.id/#XCAlVcrBJq8Jany2aqHj"
+                ],
+                password: "SmeT12"
+            },
+            "Pertaruhan Cinta|2026-02-13": {
+                links: [
+                    "https://play.realtime48s.my.id/#hUEx93EqAOPHVDYY80tR",
+                    "https://play.realtime48s.my.id/#xoSRBVyUiUz1CquXMfb8",
+                    "https://play.realtime48s.my.id/#BJxuzlCBAFabkckVfDCl",
+                    "https://play.realtime48s.my.id/#opFpLac0Z4hpLInRZMy0",
+                    "https://play.realtime48s.my.id/#nJcw1odAzGX8e0YV2eyc",
+                    "https://play.realtime48s.my.id/#OPPV6EipaoH5g85crnVW",
+                    "https://play.realtime48s.my.id/#CfC2yyJA09OwWgmc3mBD",
+                    "https://play.realtime48s.my.id/#ED8eNVg7cgqKYwdZzhaK",
+                    "https://play.realtime48s.my.id/#H9yHaL5sgvU9XZUP0MOn",
+                    "https://play.realtime48s.my.id/#KmKLLHvS7v71G46behV7",
+                    "https://play.realtime48s.my.id/#Kh7aVU59sWQPNVHRLFFF",
+                    "https://play.realtime48s.my.id/#AQaDEP0BEd03l6pL6QrD",
+                    "https://play.realtime48s.my.id/#HulUBgqAWHnYh0FgGonD",
+                    "https://play.realtime48s.my.id/#0mEIAWzP4STwZBCAWeZi",
+                    "https://play.realtime48s.my.id/#93HuLQtgptHnf97gk5zq"
+                ],
+                password: "PtC13"
+            },
+            "Sambil Menggandeng Erat Tanganku|2026-02-14": {
+                links: [
+                    "https://play.realtime48s.my.id/#T6VMrSuBCWqajeuH6IHj",
+                    "https://play.realtime48s.my.id/#uYQerXD9PyPDtylby9qx",
+                    "https://play.realtime48s.my.id/#4Kms4NIvLRHuuM8Wtq62",
+                    "https://play.realtime48s.my.id/#FaLepyMJZGOGrlx7qUl0",
+                    "https://play.realtime48s.my.id/#2NFV78hTSiY0JeE6kGjX",
+                    "https://play.realtime48s.my.id/#1wbPrWB5kOfYD61ft9sh",
+                    "https://play.realtime48s.my.id/#GAs7eJv8Q3TF93VA4LPF"
+                ],
+                password: "Sme14"
+            },
+            "Pertaruhan Cinta|2026-02-15": {
+                links: [
+                    "https://play.realtime48s.my.id/#oDEl5TzFA5BP42J0emaT",
+                    "https://play.realtime48s.my.id/#YGzpmvW4WEf7l5jXmnOt",
+                    "https://play.realtime48s.my.id/#y2F3TNjSPyLCrvA62cgL",
+                    "https://play.realtime48s.my.id/#EQuFujeG590fIRS9BKC1",
+                    "https://play.realtime48s.my.id/#9E3X4sUUZDdNv4k5Dp8Q",
+                    "https://play.realtime48s.my.id/#9PbBaIZxE1A5SmVDuDVF",
+                    "https://play.realtime48s.my.id/#McXEjAl1LxsIRE1GD73d",
+                    "https://play.realtime48s.my.id/#15B2N4V9PBNEY6R3VEcS",
+                    "https://play.realtime48s.my.id/#Riv3rBqfqhsB1kKeOfh9",
+                    "https://play.realtime48s.my.id/#nZ7TSyB4ipCrxRGPpa08",
+                    "https://play.realtime48s.my.id/#W71P2EpTr6eNS5NtaO0I",
+                    "https://play.realtime48s.my.id/#SVuwybtp58GE7pox2i0w",
+                    "https://play.realtime48s.my.id/#gLXiyy1XN0OG9rfvF6vK",
+                    "https://play.realtime48s.my.id/#YpHqLsrfRP7XecyG3Szu"
+                ],
+                password: "PtC15"
+            },
+            "Cara Meminum Ramune|2026-02-16": {
+                links: [
+                    "https://play.realtime48s.my.id/#iGoLJ2ci8hqzpSxvYc3F",
+                    "https://play.realtime48s.my.id/#vtseMW1ubyDT5dOeOIBS",
+                    "https://play.realtime48s.my.id/#A1tLJDartBManhCbJDEE",
+                    "https://play.realtime48s.my.id/#7lpMIW6LrFVyPoGygsWE",
+                    "https://play.realtime48s.my.id/#FyrkgWXXQnrXffhr3Qe4",
+                    "https://play.realtime48s.my.id/#9g1BeZZt1ExAgerXPAp7",
+                    "https://play.realtime48s.my.id/#DZjIZKxzdt5HtWd9mYF0",
+                    "https://play.realtime48s.my.id/#N7iLz7KKxnSxbNTLBH6C",
+                    "https://play.realtime48s.my.id/#zX8tVgHWn3wI8c0aDbL4",
+                    "https://play.realtime48s.my.id/#BJ0clwg9ErNeqseISJyU",
+                    "https://play.realtime48s.my.id/#UfzgiYpZ2xwyypg0umtz",
+                    "https://play.realtime48s.my.id/#CDjygYuKHAoLpDu33gTq",
+                    "https://play.realtime48s.my.id/#7puIizyNXw0T5w21uE3R",
+                    "https://play.realtime48s.my.id/#vF6pBu0L2WIUgSqNVB5H",
+                    "https://play.realtime48s.my.id/#bWM9WdWZZ90Uur493cHB",
+                    "https://play.realtime48s.my.id/#0tcdlZk4LWVLgoRkvHDk"
+                ],
+                password: "Cmr16"
+            }
         };
 
         let linkDatabase = {};
         let activeLink = "";
         let isManualMode = false;
 
-        // --- DATABASE CORE ---
-        // Memuat data dari localStorage saat startup
         function initDatabase() {
             const savedData = localStorage.getItem(STORAGE_KEY);
             if (savedData) {
                 linkDatabase = JSON.parse(savedData);
             } else {
-                // Jika tidak ada data di browser, gunakan initialLinks (Data Default)
                 linkDatabase = JSON.parse(JSON.stringify(initialLinks));
                 saveToStorage();
             }
         }
 
-        // Menyimpan status database saat ini ke browser (Sync)
         function saveToStorage() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(linkDatabase));
         }
@@ -283,10 +297,11 @@
         function addLinksToDatabase() {
             const show = document.getElementById('adminShow').value;
             const date = document.getElementById('adminDate').value;
+            const pass = document.getElementById('adminPass').value;
             const rawLinks = document.getElementById('adminLinks').value;
 
-            if (!date || !rawLinks.trim()) {
-                alert("Tanggal dan Link harus diisi!");
+            if (!date) {
+                alert("Pilih tanggal!");
                 return;
             }
 
@@ -295,37 +310,46 @@
                                          .map(l => l.trim())
                                          .filter(l => l !== "" && (l.startsWith('http') || l.startsWith('www')));
 
-            if (newLinksArray.length === 0) {
-                alert("Format link tidak valid!");
-                return;
+            if (!linkDatabase[key]) {
+                linkDatabase[key] = { links: [], password: "" };
             }
-
-            if (!linkDatabase[key]) linkDatabase[key] = [];
-            linkDatabase[key] = [...linkDatabase[key], ...newLinksArray];
             
-            saveToStorage(); // Langsung simpan ke browser
+            if (newLinksArray.length > 0) {
+                // Filter Duplikat Lokal
+                const existingLinks = linkDatabase[key].links;
+                const uniqueNewLinks = newLinksArray.filter(link => !existingLinks.includes(link));
+                linkDatabase[key].links = [...existingLinks, ...uniqueNewLinks];
+            }
+            
+            if (pass) {
+                linkDatabase[key].password = pass;
+            }
+            
+            saveToStorage();
             document.getElementById('adminLinks').value = "";
+            document.getElementById('adminPass').value = "";
             handleIdentifierChange();
-            showToast(`Berhasil menambah ${newLinksArray.length} link.`);
+            showToast(`Data Show ${show} diperbarui.`);
         }
 
         function clearAllLinks() {
-            if(confirm("Apakah Anda yakin ingin MENGOSONGKAN seluruh antrian link di database browser? Tindakan ini tidak dapat dibatalkan.")) {
+            if(confirm("Apakah Anda yakin ingin MENGOSONGKAN seluruh database browser?")) {
                 linkDatabase = {};
                 activeLink = "";
-                saveToStorage(); // Sync hapus total di browser
+                saveToStorage();
                 document.getElementById('inMain').value = "";
+                document.getElementById('inPass').value = "";
                 handleIdentifierChange();
-                showToast("Database browser dikosongkan!");
+                showToast("Database dikosongkan!");
             }
         }
 
         function hardResetDatabase() {
-            if (confirm("Kembalikan database ke data default (JKT48)? Link yang sudah terpakai akan muncul kembali.")) {
+            if (confirm("Reset ke Data Default? Semua progres akan diulang.")) {
                 linkDatabase = JSON.parse(JSON.stringify(initialLinks));
-                saveToStorage(); // Override data browser dengan default
+                saveToStorage();
                 handleIdentifierChange();
-                showToast("Database browser berhasil di-reset!");
+                showToast("Database di-reset ke default!");
             }
         }
 
@@ -352,19 +376,23 @@
             const show = document.getElementById('inShow').value;
             const date = document.getElementById('inDate').value;
             
-            if (!isManualMode && show && date) {
+            if (show && date) {
                 const key = `${show}|${date}`;
-                const links = linkDatabase[key] || [];
-                if (links.length > 0) {
-                    activeLink = links[0];
-                    document.getElementById('inMain').value = activeLink;
-                } else {
-                    activeLink = "";
-                    document.getElementById('inMain').value = "";
+                const entry = linkDatabase[key];
+                
+                if (!isManualMode) {
+                    if (entry && entry.links.length > 0) {
+                        activeLink = entry.links[0];
+                        document.getElementById('inMain').value = activeLink;
+                    } else {
+                        activeLink = "";
+                        document.getElementById('inMain').value = "";
+                    }
                 }
-            } else if (!isManualMode) {
-                activeLink = "";
-                document.getElementById('inMain').value = "";
+
+                if (entry && entry.password) {
+                    document.getElementById('inPass').value = entry.password;
+                }
             }
             
             renderDatabaseView();
@@ -377,11 +405,10 @@
             const date = document.getElementById('inDate').value;
             const key = `${show}|${date}`;
             
-            if (linkDatabase[key] && linkDatabase[key].length > 1) {
-                // Rotasi link (pindahkan yang depan ke belakang)
-                const skipped = linkDatabase[key].shift();
-                linkDatabase[key].push(skipped);
-                saveToStorage(); // Simpan urutan baru ke browser
+            if (linkDatabase[key] && linkDatabase[key].links.length > 1) {
+                const skipped = linkDatabase[key].links.shift();
+                linkDatabase[key].links.push(skipped);
+                saveToStorage();
                 handleIdentifierChange();
             }
         }
@@ -395,17 +422,18 @@
             view.innerHTML = "";
             
             if (!show || !date) {
-                view.innerHTML = "<p class='italic opacity-50 text-center py-4 text-xs'>Pilih Show & Tanggal di Form Jadwal</p>";
+                view.innerHTML = "<p class='italic opacity-50 text-center py-4 text-xs'>Pilih Show & Tanggal</p>";
                 counter.innerText = "Sisa: 0";
                 return;
             }
 
             const key = `${show}|${date}`;
-            const links = linkDatabase[key] || [];
+            const entry = linkDatabase[key];
+            const links = entry ? entry.links : [];
             counter.innerText = `Sisa: ${links.length}`;
 
             if (links.length === 0) {
-                view.innerHTML = "<span class='text-red-500 font-bold block text-center py-2'>⚠️ DATABASE KOSONG</span>";
+                view.innerHTML = "<span class='text-red-500 font-bold block text-center py-2'>⚠️ LINK HABIS</span>";
                 return;
             }
 
@@ -429,7 +457,7 @@
             const rawDate = document.getElementById('inDate').value;
             const formattedDate = formatIndoDate(rawDate) || "[TANGGAL]";
             const time = document.getElementById('inTime').value || "[JAM]";
-            const mainLink = isManualMode ? document.getElementById('inMain').value : (activeLink || "[TIDAK ADA LINK]");
+            const mainLink = isManualMode ? document.getElementById('inMain').value : (activeLink || "[LINK HABIS/TIDAK ADA]");
             const pass = document.getElementById('inPass').value || "[SANDI]";
 
             const template = `> *Show : ${show}*
@@ -465,11 +493,10 @@ Jika ada kendala, segera hubungi Admin. Selamat menonton! ✨`;
             const currentLink = isManualMode ? document.getElementById('inMain').value : activeLink;
             
             if (!currentLink || currentLink.includes("[") || currentLink === "") {
-                alert("Gagal menyalin: Link tidak tersedia untuk show/tanggal ini.");
+                alert("Gagal: Link tidak tersedia!");
                 return;
             }
 
-            // Copy ke Clipboard
             const dummy = document.createElement("textarea");
             document.body.appendChild(dummy);
             dummy.value = text;
@@ -477,12 +504,11 @@ Jika ada kendala, segera hubungi Admin. Selamat menonton! ✨`;
             document.execCommand("copy");
             document.body.removeChild(dummy);
 
-            // LOGIKA PENGHAPUSAN: Hanya jika mode AUTO
-            if (!isManualMode && linkDatabase[key]) {
-                linkDatabase[key].shift(); // Hapus link pertama dari array
-                saveToStorage(); // Langsung update penyimpanan browser (localStorage)
-                handleIdentifierChange(); // Update UI dan ambil link berikutnya
-                showToast("Berhasil Disalin & Link Terhapus dari Browser!");
+            if (!isManualMode && linkDatabase[key] && linkDatabase[key].links.length > 0) {
+                linkDatabase[key].links.shift();
+                saveToStorage();
+                handleIdentifierChange();
+                showToast("Disalin & Link Dihapus!");
             } else {
                 showToast("Berhasil Disalin!");
             }
