@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Show Manager Realtime48 - Persistence Mode</title>
+    <title>Show Manager Realtime - Admin Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
@@ -16,32 +16,91 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
+        .admin-section {
+            border-left: 4px solid #ef4444;
+        }
     </style>
 </head>
 <body class="min-h-screen py-8 px-4">
-    <div class="max-w-5xl mx-auto">
+    <div class="max-w-6xl mx-auto">
         <!-- Header -->
         <div class="text-center mb-8">
             <h1 class="text-3xl font-bold text-gray-800 tracking-tight">Show Manager Realtime</h1>
-            <p class="text-gray-600">Link yang disalin akan terhapus otomatis secara permanen</p>
+            <p class="text-gray-600 italic">Database Lokal: Link akan terhapus otomatis setelah disalin</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            <!-- LEFT COLUMN: INPUT/FORM -->
+            <!-- LEFT COLUMN: ADMIN PANEL -->
             <div class="space-y-6">
-                <div id="manualSection" class="glass-card rounded-2xl p-6 shadow-xl border border-blue-100">
+                <div class="glass-card rounded-2xl p-6 shadow-xl admin-section">
+                    <h3 class="text-lg font-bold text-red-600 mb-4 flex items-center gap-2">
+                        🛡️ Panel Admin
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Target Show</label>
+                            <select id="adminShow" class="w-full p-2 text-sm border border-gray-200 rounded-lg outline-none bg-white">
+                                <option value="Cara Meminum Ramune">Cara Meminum Ramune</option>
+                                <option value="Sambil Menggandeng Erat Tanganku">Sambil Menggandeng Erat Tanganku</option>
+                                <option value="Pertaruhan Cinta">Pertaruhan Cinta</option>
+                                <option value="Pajama Drive">Pajama Drive</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Target Tanggal</label>
+                            <input type="date" id="adminDate" class="w-full p-2 text-sm border border-gray-200 rounded-lg outline-none bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Input Link (Pisah per baris)</label>
+                            <textarea id="adminLinks" rows="4" class="w-full p-2 text-xs border border-gray-200 rounded-lg outline-none font-mono" placeholder="https://..."></textarea>
+                        </div>
+                        <button 
+                            onclick="addLinksToDatabase()"
+                            class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg text-sm font-bold transition-all shadow-lg"
+                        >
+                            Tambah ke Database
+                        </button>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-gray-100 space-y-2">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase">Manajemen Database</p>
+                        <button 
+                            onclick="clearAllLinks()"
+                            class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg text-xs font-semibold transition-all border border-gray-200"
+                        >
+                            🗑️ Kosongkan Seluruh Link
+                        </button>
+                        <button 
+                            onclick="hardResetDatabase()"
+                            class="w-full bg-orange-50 hover:bg-orange-100 text-orange-700 py-2 rounded-lg text-xs font-semibold transition-all border border-orange-200"
+                        >
+                            🔄 Reset ke Data Default (JKT48)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 shadow-md border border-gray-100">
+                    <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                        📋 Antrian Link Terpilih
+                    </h3>
+                    <div id="linkDatabaseView" class="text-[10px] font-mono text-gray-500 max-h-60 overflow-y-auto space-y-1">
+                    </div>
+                </div>
+            </div>
+
+            <!-- MIDDLE COLUMN: FORM JADWAL -->
+            <div class="space-y-6">
+                <div class="glass-card rounded-2xl p-6 shadow-xl border border-blue-100">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-bold text-gray-800">Form Jadwal</h3>
-                        <div class="flex flex-col items-end">
-                            <span id="linkCounter" class="text-xs font-bold bg-blue-100 text-blue-600 px-3 py-1 rounded-full">
-                                Sisa Link: 0
-                            </span>
-                        </div>
+                        <span id="linkCounter" class="text-xs font-bold bg-blue-100 text-blue-600 px-3 py-1 rounded-full">
+                            Sisa: 0
+                        </span>
                     </div>
                     
                     <div class="space-y-4">
-                        <!-- Nama Show -->
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nama Show</label>
                             <select id="inShow" onchange="handleIdentifierChange()" class="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
@@ -53,7 +112,6 @@
                             </select>
                         </div>
                         
-                        <!-- Tanggal & Jam -->
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pilih Tanggal</label>
@@ -65,7 +123,6 @@
                             </div>
                         </div>
 
-                        <!-- Link Utama (Switch Manual/Auto) -->
                         <div>
                             <div class="flex justify-between items-center mb-1">
                                 <label class="block text-xs font-bold text-gray-500 uppercase">Link Utama</label>
@@ -79,38 +136,22 @@
                                 </div>
                             </div>
                             <div class="flex gap-2">
-                                <input type="text" id="inMain" oninput="updatePreview()" class="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-400" placeholder="Masukkan link utama...">
-                                <button id="btnNextLink" onclick="useNextLink()" class="bg-gray-100 hover:bg-gray-200 p-3 rounded-lg border border-gray-200 transition-colors" title="Lewati ke Link Berikutnya">
+                                <input type="text" id="inMain" oninput="updatePreview()" class="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-400" placeholder="Link akan muncul otomatis...">
+                                <button id="btnNextLink" onclick="useNextLink()" class="bg-gray-100 hover:bg-gray-200 p-3 rounded-lg border border-gray-200 transition-colors">
                                     🔄
                                 </button>
                             </div>
-                            <p id="idInfo" class="text-[9px] text-blue-500 mt-1 font-mono uppercase italic"></p>
                         </div>
 
-                        <!-- Sandi Replay -->
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Sandi Replay</label>
                             <input type="text" id="inPass" oninput="updatePreview()" class="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="8Ramun3">
                         </div>
-
-                        <div class="pt-4 border-t border-gray-100 flex justify-between">
-                            <button onclick="hardResetDatabase()" class="text-xs text-red-500 hover:underline">Restore Semua Link Original</button>
-                            <p class="text-[10px] text-gray-400 font-bold">MODE: PERSISTENT STORAGE ACTIVE</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Link Database Info -->
-                <div class="glass-card rounded-2xl p-6 shadow-md border border-gray-100">
-                    <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                        📋 Antrian Link Tersedia (Local Storage)
-                    </h3>
-                    <div id="linkDatabaseView" class="text-[10px] font-mono text-gray-500 max-h-40 overflow-y-auto space-y-1">
                     </div>
                 </div>
             </div>
 
-            <!-- RIGHT COLUMN: PREVIEW & RESULT -->
+            <!-- RIGHT COLUMN: PREVIEW -->
             <div class="space-y-6">
                 <div class="glass-card rounded-2xl p-6 shadow-xl border-t-4 border-blue-600 sticky top-8">
                     <div class="flex justify-between items-center mb-4">
@@ -118,16 +159,13 @@
                         <button 
                             onclick="copyAndConsume()"
                             id="copyBtn"
-                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 shadow-lg"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H5a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                            Salin & Hapus Link
+                            Salin Format
                         </button>
                     </div>
                     
-                    <div id="formattedOutput" class="bg-gray-50 p-4 rounded-xl border border-gray-200 text-sm whitespace-pre-wrap font-sans leading-relaxed text-gray-700 overflow-y-auto max-h-[500px]">
+                    <div id="formattedOutput" class="bg-gray-50 p-4 rounded-xl border border-gray-200 text-sm whitespace-pre-wrap font-sans leading-relaxed text-gray-700 overflow-y-auto max-h-[550px]">
                     </div>
                 </div>
             </div>
@@ -136,11 +174,14 @@
 
     <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-black text-white px-8 py-3 rounded-full text-sm font-bold opacity-0 transition-opacity pointer-events-none z-50 shadow-2xl">
-        Berhasil disalin & Link dihapus permanen!
+        Berhasil!
     </div>
 
     <script>
-        // Data awal (Original) yang akan di-load jika storage kosong
+        const STORAGE_KEY = "show_manager_links_persistent_v2";
+        const REPLAY_BASE_URL = "https://48realtime.github.io/Replay-Show/";
+        
+        // Data Default (Konfigurasi JKT48)
         const initialLinks = {
             "Sambil Menggandeng Erat Tanganku|2026-02-12": [
                 "https://play.realtime48s.my.id/#dESIHmCyA6l5Z9k7ZGtP",
@@ -153,22 +194,6 @@
                 "https://play.realtime48s.my.id/#vhWM7wJriATYOEtx9sM6",
                 "https://play.realtime48s.my.id/#tyLqrDcaZ9fXLHjh9GFF",
                 "https://play.realtime48s.my.id/#XCAlVcrBJq8Jany2aqHj"
-            ],
-            "Pertaruhan Cinta|2026-02-15": [
-                "https://play.realtime48s.my.id/#oDEl5TzFA5BP42J0emaT",
-                "https://play.realtime48s.my.id/#YGzpmvW4WEf7l5jXmnOt",
-                "https://play.realtime48s.my.id/#y2F3TNjSPyLCrvA62cgL",
-                "https://play.realtime48s.my.id/#EQuFujeG590fIRS9BKC1",
-                "https://play.realtime48s.my.id/#9E3X4sUUZDdNv4k5Dp8Q",
-                "https://play.realtime48s.my.id/#9PbBaIZxE1A5SmVDuDVF",
-                "https://play.realtime48s.my.id/#McXEjAl1LxsIRE1GD73d",
-                "https://play.realtime48s.my.id/#15B2N4V9PBNEY6R3VEcS",
-                "https://play.realtime48s.my.id/#Riv3rBqfqhsB1kKeOfh9",
-                "https://play.realtime48s.my.id/#nZ7TSyB4ipCrxRGPpa08",
-                "https://play.realtime48s.my.id/#W71P2EpTr6eNS5NtaO0I",
-                "https://play.realtime48s.my.id/#SVuwybtp58GE7pox2i0w",
-                "https://play.realtime48s.my.id/#gLXiyy1XN0OG9rfvF6vK",
-                "https://play.realtime48s.my.id/#YpHqLsrfRP7XecyG3Szu"
             ],
             "Pertaruhan Cinta|2026-02-13": [
                 "https://play.realtime48s.my.id/#hUEx93EqAOPHVDYY80tR",
@@ -196,6 +221,22 @@
                 "https://play.realtime48s.my.id/#1wbPrWB5kOfYD61ft9sh",
                 "https://play.realtime48s.my.id/#GAs7eJv8Q3TF93VA4LPF"
             ],
+            "Pertaruhan Cinta|2026-02-15": [
+                "https://play.realtime48s.my.id/#oDEl5TzFA5BP42J0emaT",
+                "https://play.realtime48s.my.id/#YGzpmvW4WEf7l5jXmnOt",
+                "https://play.realtime48s.my.id/#y2F3TNjSPyLCrvA62cgL",
+                "https://play.realtime48s.my.id/#EQuFujeG590fIRS9BKC1",
+                "https://play.realtime48s.my.id/#9E3X4sUUZDdNv4k5Dp8Q",
+                "https://play.realtime48s.my.id/#9PbBaIZxE1A5SmVDuDVF",
+                "https://play.realtime48s.my.id/#McXEjAl1LxsIRE1GD73d",
+                "https://play.realtime48s.my.id/#15B2N4V9PBNEY6R3VEcS",
+                "https://play.realtime48s.my.id/#Riv3rBqfqhsB1kKeOfh9",
+                "https://play.realtime48s.my.id/#nZ7TSyB4ipCrxRGPpa08",
+                "https://play.realtime48s.my.id/#W71P2EpTr6eNS5NtaO0I",
+                "https://play.realtime48s.my.id/#SVuwybtp58GE7pox2i0w",
+                "https://play.realtime48s.my.id/#gLXiyy1XN0OG9rfvF6vK",
+                "https://play.realtime48s.my.id/#YpHqLsrfRP7XecyG3Szu"
+            ],
             "Cara Meminum Ramune|2026-02-16": [
                 "https://play.realtime48s.my.id/#iGoLJ2ci8hqzpSxvYc3F",
                 "https://play.realtime48s.my.id/#vtseMW1ubyDT5dOeOIBS",
@@ -216,78 +257,103 @@
             ]
         };
 
-        const STORAGE_KEY = "show_manager_links_db";
-        const REPLAY_BASE_URL = "https://48realtime.github.io/Replay-Show/";
-        
         let linkDatabase = {};
         let activeLink = "";
         let isManualMode = false;
 
-        // FUNGSI UTAMA: Load dari LocalStorage atau Gunakan Data Awal
+        // --- DATABASE CORE ---
+        // Memuat data dari localStorage saat startup
         function initDatabase() {
             const savedData = localStorage.getItem(STORAGE_KEY);
             if (savedData) {
                 linkDatabase = JSON.parse(savedData);
             } else {
+                // Jika tidak ada data di browser, gunakan initialLinks (Data Default)
                 linkDatabase = JSON.parse(JSON.stringify(initialLinks));
                 saveToStorage();
             }
         }
 
+        // Menyimpan status database saat ini ke browser (Sync)
         function saveToStorage() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(linkDatabase));
         }
 
-        function hardResetDatabase() {
-            if (confirm("PERINGATAN: Ini akan mengembalikan semua link yang sudah terhapus. Lanjutkan?")) {
-                localStorage.removeItem(STORAGE_KEY);
-                location.reload();
+        // --- ADMIN FUNCTIONS ---
+        function addLinksToDatabase() {
+            const show = document.getElementById('adminShow').value;
+            const date = document.getElementById('adminDate').value;
+            const rawLinks = document.getElementById('adminLinks').value;
+
+            if (!date || !rawLinks.trim()) {
+                alert("Tanggal dan Link harus diisi!");
+                return;
+            }
+
+            const key = `${show}|${date}`;
+            const newLinksArray = rawLinks.split('\n')
+                                         .map(l => l.trim())
+                                         .filter(l => l !== "" && (l.startsWith('http') || l.startsWith('www')));
+
+            if (newLinksArray.length === 0) {
+                alert("Format link tidak valid!");
+                return;
+            }
+
+            if (!linkDatabase[key]) linkDatabase[key] = [];
+            linkDatabase[key] = [...linkDatabase[key], ...newLinksArray];
+            
+            saveToStorage(); // Langsung simpan ke browser
+            document.getElementById('adminLinks').value = "";
+            handleIdentifierChange();
+            showToast(`Berhasil menambah ${newLinksArray.length} link.`);
+        }
+
+        function clearAllLinks() {
+            if(confirm("Apakah Anda yakin ingin MENGOSONGKAN seluruh antrian link di database browser? Tindakan ini tidak dapat dibatalkan.")) {
+                linkDatabase = {};
+                activeLink = "";
+                saveToStorage(); // Sync hapus total di browser
+                document.getElementById('inMain').value = "";
+                handleIdentifierChange();
+                showToast("Database browser dikosongkan!");
             }
         }
 
+        function hardResetDatabase() {
+            if (confirm("Kembalikan database ke data default (JKT48)? Link yang sudah terpakai akan muncul kembali.")) {
+                linkDatabase = JSON.parse(JSON.stringify(initialLinks));
+                saveToStorage(); // Override data browser dengan default
+                handleIdentifierChange();
+                showToast("Database browser berhasil di-reset!");
+            }
+        }
+
+        // --- UI LOGIC ---
         function toggleLinkMode() {
             isManualMode = document.getElementById('linkModeToggle').checked;
             const inputMain = document.getElementById('inMain');
             const btnNext = document.getElementById('btnNextLink');
-            const copyBtnText = document.getElementById('copyBtn');
             
             if (isManualMode) {
                 inputMain.disabled = false;
-                inputMain.classList.remove('bg-gray-50', 'text-gray-400');
-                inputMain.classList.add('bg-white', 'text-gray-800');
-                btnNext.disabled = true;
-                btnNext.classList.add('opacity-50');
-                copyBtnText.innerHTML = 'Salin Format (Manual)';
+                inputMain.classList.remove('bg-gray-50');
+                btnNext.classList.add('opacity-50', 'pointer-events-none');
             } else {
                 inputMain.disabled = true;
-                inputMain.classList.add('bg-gray-50', 'text-gray-400');
-                inputMain.classList.remove('bg-white', 'text-gray-800');
-                btnNext.disabled = false;
-                btnNext.classList.remove('opacity-50');
-                copyBtnText.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H5a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                    Salin & Hapus Link`;
+                inputMain.classList.add('bg-gray-50');
+                btnNext.classList.remove('opacity-50', 'pointer-events-none');
                 handleIdentifierChange();
             }
             updatePreview();
         }
 
         function handleIdentifierChange() {
-            if (isManualMode) {
-                updatePreview();
-                return;
-            }
-
             const show = document.getElementById('inShow').value;
             const date = document.getElementById('inDate').value;
-            const idInfo = document.getElementById('idInfo');
             
-            if (show && date) {
+            if (!isManualMode && show && date) {
                 const key = `${show}|${date}`;
-                idInfo.innerText = `ID: ${key}`;
-                
                 const links = linkDatabase[key] || [];
                 if (links.length > 0) {
                     activeLink = links[0];
@@ -296,8 +362,7 @@
                     activeLink = "";
                     document.getElementById('inMain').value = "";
                 }
-            } else {
-                idInfo.innerText = "";
+            } else if (!isManualMode) {
                 activeLink = "";
                 document.getElementById('inMain').value = "";
             }
@@ -312,11 +377,11 @@
             const date = document.getElementById('inDate').value;
             const key = `${show}|${date}`;
             
-            // Lewati link (pindah ke belakang antrian)
             if (linkDatabase[key] && linkDatabase[key].length > 1) {
+                // Rotasi link (pindahkan yang depan ke belakang)
                 const skipped = linkDatabase[key].shift();
                 linkDatabase[key].push(skipped);
-                saveToStorage();
+                saveToStorage(); // Simpan urutan baru ke browser
                 handleIdentifierChange();
             }
         }
@@ -330,24 +395,24 @@
             view.innerHTML = "";
             
             if (!show || !date) {
-                view.innerHTML = "Pilih Show & Tanggal untuk melihat sisa link.";
-                counter.innerText = "Sisa Link: 0";
+                view.innerHTML = "<p class='italic opacity-50 text-center py-4 text-xs'>Pilih Show & Tanggal di Form Jadwal</p>";
+                counter.innerText = "Sisa: 0";
                 return;
             }
 
             const key = `${show}|${date}`;
             const links = linkDatabase[key] || [];
-            counter.innerText = `Sisa Link: ${links.length}`;
+            counter.innerText = `Sisa: ${links.length}`;
 
             if (links.length === 0) {
-                view.innerHTML = "<span class='text-red-500 font-bold'>⚠️ LINK HABIS! Silakan tambah di database atau gunakan mode manual.</span>";
+                view.innerHTML = "<span class='text-red-500 font-bold block text-center py-2'>⚠️ DATABASE KOSONG</span>";
                 return;
             }
 
             links.forEach((link, index) => {
                 const div = document.createElement('div');
-                div.className = `p-1 truncate border-b border-gray-50 ${index === 0 ? 'text-blue-600 font-bold bg-blue-50' : 'text-gray-400'}`;
-                div.innerText = `${index + 1}. ${link}`;
+                div.className = `p-1 truncate border-b border-gray-100 flex items-center gap-2 ${index === 0 ? 'text-blue-600 font-bold bg-blue-50' : 'text-gray-400'}`;
+                div.innerHTML = `<span class="bg-gray-200 text-gray-600 px-1 rounded text-[8px]">${index + 1}</span> <span>${link}</span>`;
                 view.appendChild(div);
             });
         }
@@ -355,7 +420,6 @@
         function formatIndoDate(dateStr) {
             if (!dateStr) return null;
             const dateObj = new Date(dateStr);
-            if (isNaN(dateObj.getTime())) return null;
             const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
             return `${String(dateObj.getDate()).padStart(2, '0')} ${months[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
         }
@@ -365,8 +429,7 @@
             const rawDate = document.getElementById('inDate').value;
             const formattedDate = formatIndoDate(rawDate) || "[TANGGAL]";
             const time = document.getElementById('inTime').value || "[JAM]";
-            
-            const mainLink = isManualMode ? document.getElementById('inMain').value : (activeLink || "[LINK UTAMA]");
+            const mainLink = isManualMode ? document.getElementById('inMain').value : (activeLink || "[TIDAK ADA LINK]");
             const pass = document.getElementById('inPass').value || "[SANDI]";
 
             const template = `> *Show : ${show}*
@@ -400,12 +463,13 @@ Jika ada kendala, segera hubungi Admin. Selamat menonton! ✨`;
             const text = document.getElementById('formattedOutput').innerText;
             
             const currentLink = isManualMode ? document.getElementById('inMain').value : activeLink;
-            if (!currentLink || currentLink.includes("[")) {
-                alert("Mohon lengkapi data dan pastikan link tersedia!");
+            
+            if (!currentLink || currentLink.includes("[") || currentLink === "") {
+                alert("Gagal menyalin: Link tidak tersedia untuk show/tanggal ini.");
                 return;
             }
 
-            // Copy Action
+            // Copy ke Clipboard
             const dummy = document.createElement("textarea");
             document.body.appendChild(dummy);
             dummy.value = text;
@@ -413,34 +477,30 @@ Jika ada kendala, segera hubungi Admin. Selamat menonton! ✨`;
             document.execCommand("copy");
             document.body.removeChild(dummy);
 
-            // LOGIKA HAPUS PERMANEN (Hanya jika mode AUTO)
+            // LOGIKA PENGHAPUSAN: Hanya jika mode AUTO
             if (!isManualMode && linkDatabase[key]) {
-                // Hapus item pertama (link yang baru saja disalin)
-                linkDatabase[key].shift();
-                
-                // Simpan perubahan ke LocalStorage secara permanen
-                saveToStorage();
-                
-                // Refresh UI
-                handleIdentifierChange();
-                showToast("Link dihapus dari database!");
+                linkDatabase[key].shift(); // Hapus link pertama dari array
+                saveToStorage(); // Langsung update penyimpanan browser (localStorage)
+                handleIdentifierChange(); // Update UI dan ambil link berikutnya
+                showToast("Berhasil Disalin & Link Terhapus dari Browser!");
             } else {
-                showToast("Berhasil disalin!");
+                showToast("Berhasil Disalin!");
             }
         }
 
         function showToast(msg) {
             const toast = document.getElementById('toast');
-            if(msg) toast.innerText = msg;
+            toast.innerText = msg;
             toast.style.opacity = '1';
             setTimeout(() => { toast.style.opacity = '0'; }, 3000);
         }
 
         window.onload = () => {
-            initDatabase(); // Load data dari storage
+            initDatabase();
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('inDate').value = today;
-            toggleLinkMode(); 
+            document.getElementById('adminDate').value = today;
+            toggleLinkMode();
             handleIdentifierChange();
         };
     </script>
