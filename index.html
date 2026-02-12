@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Show Manager Realtime - Cloud Storage</title>
+    <title>Show Manager Realtime48 - Persistence Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
@@ -16,34 +16,19 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        .loading-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(255,255,255,0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-        }
     </style>
 </head>
 <body class="min-h-screen py-8 px-4">
-    <div id="loader" class="loading-overlay">
-        <div class="flex flex-col items-center gap-3">
-            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-            <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Menghubungkan ke Cloud...</p>
-        </div>
-    </div>
-
     <div class="max-w-5xl mx-auto">
         <!-- Header -->
         <div class="text-center mb-8">
             <h1 class="text-3xl font-bold text-gray-800 tracking-tight">Show Manager Realtime</h1>
-            <p class="text-gray-600">Manajemen Link Cloud - Terhapus Otomatis Setelah Digunakan</p>
+            <p class="text-gray-600">Link yang disalin akan terhapus otomatis secara permanen</p>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- KOLOM KIRI: INPUT/FORM -->
+            
+            <!-- LEFT COLUMN: INPUT/FORM -->
             <div class="space-y-6">
                 <div id="manualSection" class="glass-card rounded-2xl p-6 shadow-xl border border-blue-100">
                     <div class="flex justify-between items-center mb-4">
@@ -56,6 +41,7 @@
                     </div>
                     
                     <div class="space-y-4">
+                        <!-- Nama Show -->
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nama Show</label>
                             <select id="inShow" onchange="handleIdentifierChange()" class="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
@@ -67,6 +53,7 @@
                             </select>
                         </div>
                         
+                        <!-- Tanggal & Jam -->
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pilih Tanggal</label>
@@ -78,6 +65,7 @@
                             </div>
                         </div>
 
+                        <!-- Link Utama (Switch Manual/Auto) -->
                         <div>
                             <div class="flex justify-between items-center mb-1">
                                 <label class="block text-xs font-bold text-gray-500 uppercase">Link Utama</label>
@@ -92,105 +80,292 @@
                             </div>
                             <div class="flex gap-2">
                                 <input type="text" id="inMain" oninput="updatePreview()" class="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-400" placeholder="Masukkan link utama...">
-                                <button id="btnNextLink" onclick="useNextLink()" class="bg-gray-100 hover:bg-gray-200 p-3 rounded-lg border border-gray-200 transition-colors" title="Link Berikutnya">
+                                <button id="btnNextLink" onclick="useNextLink()" class="bg-gray-100 hover:bg-gray-200 p-3 rounded-lg border border-gray-200 transition-colors" title="Lewati ke Link Berikutnya">
                                     🔄
                                 </button>
                             </div>
                             <p id="idInfo" class="text-[9px] text-blue-500 mt-1 font-mono uppercase italic"></p>
                         </div>
 
+                        <!-- Sandi Replay -->
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Sandi Replay</label>
                             <input type="text" id="inPass" oninput="updatePreview()" class="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="8Ramun3">
                         </div>
 
                         <div class="pt-4 border-t border-gray-100 flex justify-between">
-                            <button onclick="resetLinks()" class="text-xs text-red-500 hover:underline">Reset database link</button>
-                            <p class="text-[10px] text-gray-400">Link yang disalin akan terhapus selamanya</p>
+                            <button onclick="hardResetDatabase()" class="text-xs text-red-500 hover:underline">Restore Semua Link Original</button>
+                            <p class="text-[10px] text-gray-400 font-bold">MODE: PERSISTENT STORAGE ACTIVE</p>
                         </div>
                     </div>
                 </div>
 
+                <!-- Link Database Info -->
                 <div class="glass-card rounded-2xl p-6 shadow-md border border-gray-100">
                     <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                        📋 Antrian Link Berdasarkan Identitas
+                        📋 Antrian Link Tersedia (Local Storage)
                     </h3>
-                    <div id="linkDatabaseView" class="text-[10px] font-mono text-gray-500 max-h-40 overflow-y-auto space-y-1"></div>
+                    <div id="linkDatabaseView" class="text-[10px] font-mono text-gray-500 max-h-40 overflow-y-auto space-y-1">
+                    </div>
                 </div>
             </div>
 
-            <!-- KOLOM KANAN: PREVIEW & RESULT -->
+            <!-- RIGHT COLUMN: PREVIEW & RESULT -->
             <div class="space-y-6">
                 <div class="glass-card rounded-2xl p-6 shadow-xl border-t-4 border-blue-600 sticky top-8">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-bold text-gray-800">Preview Pesan</h3>
-                        <button onclick="copyAndConsume()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2">
-                            Salin Format
+                        <button 
+                            onclick="copyAndConsume()"
+                            id="copyBtn"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H5a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Salin & Hapus Link
                         </button>
                     </div>
-                    <div id="formattedOutput" class="bg-gray-50 p-4 rounded-xl border border-gray-200 text-sm whitespace-pre-wrap font-sans leading-relaxed text-gray-700 overflow-y-auto max-h-[500px]"></div>
+                    
+                    <div id="formattedOutput" class="bg-gray-50 p-4 rounded-xl border border-gray-200 text-sm whitespace-pre-wrap font-sans leading-relaxed text-gray-700 overflow-y-auto max-h-[500px]">
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-black text-white px-8 py-3 rounded-full text-sm font-bold opacity-0 transition-opacity pointer-events-none z-50 shadow-2xl">
-        Berhasil disalin!
+        Berhasil disalin & Link dihapus permanen!
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Inisialisasi Firebase
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-        // Master Link Data (Fallback)
+    <script>
+        // Data awal (Original) yang akan di-load jika storage kosong
         const initialLinks = {
             "Sambil Menggandeng Erat Tanganku|2026-02-12": [
-                "https://play.realtime48s.my.id/#dESIHmCyA6l5Z9k7ZGtP", "https://play.realtime48s.my.id/#K4tlp9smPQSgpcPlMRzR",
-                "https://play.realtime48s.my.id/#fnT3tMHkJYUYXnauVDEP", "https://play.realtime48s.my.id/#4AU2Xa8j3mdbBmEDZTup",
-                "https://play.realtime48s.my.id/#dNvIIZHc0EBkbkue8LAv", "https://play.realtime48s.my.id/#zlcfm8s8iYMDiFg4Kpyo",
-                "https://play.realtime48s.my.id/#ZYqgK8khxT3lUktLBNcV", "https://play.realtime48s.my.id/#vhWM7wJriATYOEtx9sM6",
-                "https://play.realtime48s.my.id/#tyLqrDcaZ9fXLHjh9GFF", "https://play.realtime48s.my.id/#XCAlVcrBJq8Jany2aqHj"
+                "https://play.realtime48s.my.id/#dESIHmCyA6l5Z9k7ZGtP",
+                "https://play.realtime48s.my.id/#K4tlp9smPQSgpcPlMRzR",
+                "https://play.realtime48s.my.id/#fnT3tMHkJYUYXnauVDEP",
+                "https://play.realtime48s.my.id/#4AU2Xa8j3mdbBmEDZTup",
+                "https://play.realtime48s.my.id/#dNvIIZHc0EBkbkue8LAv",
+                "https://play.realtime48s.my.id/#zlcfm8s8iYMDiFg4Kpyo",
+                "https://play.realtime48s.my.id/#ZYqgK8khxT3lUktLBNcV",
+                "https://play.realtime48s.my.id/#vhWM7wJriATYOEtx9sM6",
+                "https://play.realtime48s.my.id/#tyLqrDcaZ9fXLHjh9GFF",
+                "https://play.realtime48s.my.id/#XCAlVcrBJq8Jany2aqHj"
             ],
             "Pertaruhan Cinta|2026-02-15": [
-                "https://play.realtime48s.my.id/#oDEl5TzFA5BP42J0emaT", "https://play.realtime48s.my.id/#YGzpmvW4WEf7l5jXmnOt",
-                "https://play.realtime48s.my.id/#y2F3TNjSPyLCrvA62cgL", "https://play.realtime48s.my.id/#EQuFujeG590fIRS9BKC1",
-                "https://play.realtime48s.my.id/#9E3X4sUUZDdNv4k5Dp8Q", "https://play.realtime48s.my.id/#9PbBaIZxE1A5SmVDuDVF"
+                "https://play.realtime48s.my.id/#oDEl5TzFA5BP42J0emaT",
+                "https://play.realtime48s.my.id/#YGzpmvW4WEf7l5jXmnOt",
+                "https://play.realtime48s.my.id/#y2F3TNjSPyLCrvA62cgL",
+                "https://play.realtime48s.my.id/#EQuFujeG590fIRS9BKC1",
+                "https://play.realtime48s.my.id/#9E3X4sUUZDdNv4k5Dp8Q",
+                "https://play.realtime48s.my.id/#9PbBaIZxE1A5SmVDuDVF",
+                "https://play.realtime48s.my.id/#McXEjAl1LxsIRE1GD73d",
+                "https://play.realtime48s.my.id/#15B2N4V9PBNEY6R3VEcS",
+                "https://play.realtime48s.my.id/#Riv3rBqfqhsB1kKeOfh9",
+                "https://play.realtime48s.my.id/#nZ7TSyB4ipCrxRGPpa08",
+                "https://play.realtime48s.my.id/#W71P2EpTr6eNS5NtaO0I",
+                "https://play.realtime48s.my.id/#SVuwybtp58GE7pox2i0w",
+                "https://play.realtime48s.my.id/#gLXiyy1XN0OG9rfvF6vK",
+                "https://play.realtime48s.my.id/#YpHqLsrfRP7XecyG3Szu"
+            ],
+            "Pertaruhan Cinta|2026-02-13": [
+                "https://play.realtime48s.my.id/#hUEx93EqAOPHVDYY80tR",
+                "https://play.realtime48s.my.id/#xoSRBVyUiUz1CquXMfb8",
+                "https://play.realtime48s.my.id/#BJxuzlCBAFabkckVfDCl",
+                "https://play.realtime48s.my.id/#opFpLac0Z4hpLInRZMy0",
+                "https://play.realtime48s.my.id/#nJcw1odAzGX8e0YV2eyc",
+                "https://play.realtime48s.my.id/#OPPV6EipaoH5g85crnVW",
+                "https://play.realtime48s.my.id/#CfC2yyJA09OwWgmc3mBD",
+                "https://play.realtime48s.my.id/#ED8eNVg7cgqKYwdZzhaK",
+                "https://play.realtime48s.my.id/#H9yHaL5sgvU9XZUP0MOn",
+                "https://play.realtime48s.my.id/#KmKLLHvS7v71G46behV7",
+                "https://play.realtime48s.my.id/#Kh7aVU59sWQPNVHRLFFF",
+                "https://play.realtime48s.my.id/#AQaDEP0BEd03l6pL6QrD",
+                "https://play.realtime48s.my.id/#HulUBgqAWHnYh0FgGonD",
+                "https://play.realtime48s.my.id/#0mEIAWzP4STwZBCAWeZi",
+                "https://play.realtime48s.my.id/#93HuLQtgptHnf97gk5zq"
+            ],
+            "Sambil Menggandeng Erat Tanganku|2026-02-14": [
+                "https://play.realtime48s.my.id/#T6VMrSuBCWqajeuH6IHj",
+                "https://play.realtime48s.my.id/#uYQerXD9PyPDtylby9qx",
+                "https://play.realtime48s.my.id/#4Kms4NIvLRHuuM8Wtq62",
+                "https://play.realtime48s.my.id/#FaLepyMJZGOGrlx7qUl0",
+                "https://play.realtime48s.my.id/#2NFV78hTSiY0JeE6kGjX",
+                "https://play.realtime48s.my.id/#1wbPrWB5kOfYD61ft9sh",
+                "https://play.realtime48s.my.id/#GAs7eJv8Q3TF93VA4LPF"
             ],
             "Cara Meminum Ramune|2026-02-16": [
-                "https://play.realtime48s.my.id/#iGoLJ2ci8hqzpSxvYc3F", "https://play.realtime48s.my.id/#vtseMW1ubyDT5dOeOIBS",
-                "https://play.realtime48s.my.id/#A1tLJDartBManhCbJDEE", "https://play.realtime48s.my.id/#7lpMIW6LrFVyPoGygsWE"
+                "https://play.realtime48s.my.id/#iGoLJ2ci8hqzpSxvYc3F",
+                "https://play.realtime48s.my.id/#vtseMW1ubyDT5dOeOIBS",
+                "https://play.realtime48s.my.id/#A1tLJDartBManhCbJDEE",
+                "https://play.realtime48s.my.id/#7lpMIW6LrFVyPoGygsWE",
+                "https://play.realtime48s.my.id/#FyrkgWXXQnrXffhr3Qe4",
+                "https://play.realtime48s.my.id/#9g1BeZZt1ExAgerXPAp7",
+                "https://play.realtime48s.my.id/#DZjIZKxzdt5HtWd9mYF0",
+                "https://play.realtime48s.my.id/#N7iLz7KKxnSxbNTLBH6C",
+                "https://play.realtime48s.my.id/#zX8tVgHWn3wI8c0aDbL4",
+                "https://play.realtime48s.my.id/#BJ0clwg9ErNeqseISJyU",
+                "https://play.realtime48s.my.id/#UfzgiYpZ2xwyypg0umtz",
+                "https://play.realtime48s.my.id/#CDjygYuKHAoLpDu33gTq",
+                "https://play.realtime48s.my.id/#7puIizyNXw0T5w21uE3R",
+                "https://play.realtime48s.my.id/#vF6pBu0L2WIUgSqNVB5H",
+                "https://play.realtime48s.my.id/#bWM9WdWZZ90Uur493cHB",
+                "https://play.realtime48s.my.id/#0tcdlZk4LWVLgoRkvHDk"
             ]
         };
 
-        let currentCloudData = {};
-        let isManualMode = false;
+        const STORAGE_KEY = "show_manager_links_db";
+        const REPLAY_BASE_URL = "https://48realtime.github.io/Replay-Show/";
+        
+        let linkDatabase = {};
         let activeLink = "";
-        let currentUser = null;
+        let isManualMode = false;
 
-        // UI Helpers
-        window.toggleLinkMode = () => {
+        // FUNGSI UTAMA: Load dari LocalStorage atau Gunakan Data Awal
+        function initDatabase() {
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                linkDatabase = JSON.parse(savedData);
+            } else {
+                linkDatabase = JSON.parse(JSON.stringify(initialLinks));
+                saveToStorage();
+            }
+        }
+
+        function saveToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(linkDatabase));
+        }
+
+        function hardResetDatabase() {
+            if (confirm("PERINGATAN: Ini akan mengembalikan semua link yang sudah terhapus. Lanjutkan?")) {
+                localStorage.removeItem(STORAGE_KEY);
+                location.reload();
+            }
+        }
+
+        function toggleLinkMode() {
             isManualMode = document.getElementById('linkModeToggle').checked;
             const inputMain = document.getElementById('inMain');
             const btnNext = document.getElementById('btnNextLink');
-            inputMain.disabled = !isManualMode;
-            btnNext.disabled = isManualMode;
-            if (!isManualMode) handleIdentifierChange();
+            const copyBtnText = document.getElementById('copyBtn');
+            
+            if (isManualMode) {
+                inputMain.disabled = false;
+                inputMain.classList.remove('bg-gray-50', 'text-gray-400');
+                inputMain.classList.add('bg-white', 'text-gray-800');
+                btnNext.disabled = true;
+                btnNext.classList.add('opacity-50');
+                copyBtnText.innerHTML = 'Salin Format (Manual)';
+            } else {
+                inputMain.disabled = true;
+                inputMain.classList.add('bg-gray-50', 'text-gray-400');
+                inputMain.classList.remove('bg-white', 'text-gray-800');
+                btnNext.disabled = false;
+                btnNext.classList.remove('opacity-50');
+                copyBtnText.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H5a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Salin & Hapus Link`;
+                handleIdentifierChange();
+            }
             updatePreview();
-        };
+        }
 
-        window.updatePreview = () => {
+        function handleIdentifierChange() {
+            if (isManualMode) {
+                updatePreview();
+                return;
+            }
+
+            const show = document.getElementById('inShow').value;
+            const date = document.getElementById('inDate').value;
+            const idInfo = document.getElementById('idInfo');
+            
+            if (show && date) {
+                const key = `${show}|${date}`;
+                idInfo.innerText = `ID: ${key}`;
+                
+                const links = linkDatabase[key] || [];
+                if (links.length > 0) {
+                    activeLink = links[0];
+                    document.getElementById('inMain').value = activeLink;
+                } else {
+                    activeLink = "";
+                    document.getElementById('inMain').value = "";
+                }
+            } else {
+                idInfo.innerText = "";
+                activeLink = "";
+                document.getElementById('inMain').value = "";
+            }
+            
+            renderDatabaseView();
+            updatePreview();
+        }
+
+        function useNextLink() {
+            if (isManualMode) return;
+            const show = document.getElementById('inShow').value;
+            const date = document.getElementById('inDate').value;
+            const key = `${show}|${date}`;
+            
+            // Lewati link (pindah ke belakang antrian)
+            if (linkDatabase[key] && linkDatabase[key].length > 1) {
+                const skipped = linkDatabase[key].shift();
+                linkDatabase[key].push(skipped);
+                saveToStorage();
+                handleIdentifierChange();
+            }
+        }
+
+        function renderDatabaseView() {
+            const view = document.getElementById('linkDatabaseView');
+            const counter = document.getElementById('linkCounter');
+            const show = document.getElementById('inShow').value;
+            const date = document.getElementById('inDate').value;
+            
+            view.innerHTML = "";
+            
+            if (!show || !date) {
+                view.innerHTML = "Pilih Show & Tanggal untuk melihat sisa link.";
+                counter.innerText = "Sisa Link: 0";
+                return;
+            }
+
+            const key = `${show}|${date}`;
+            const links = linkDatabase[key] || [];
+            counter.innerText = `Sisa Link: ${links.length}`;
+
+            if (links.length === 0) {
+                view.innerHTML = "<span class='text-red-500 font-bold'>⚠️ LINK HABIS! Silakan tambah di database atau gunakan mode manual.</span>";
+                return;
+            }
+
+            links.forEach((link, index) => {
+                const div = document.createElement('div');
+                div.className = `p-1 truncate border-b border-gray-50 ${index === 0 ? 'text-blue-600 font-bold bg-blue-50' : 'text-gray-400'}`;
+                div.innerText = `${index + 1}. ${link}`;
+                view.appendChild(div);
+            });
+        }
+
+        function formatIndoDate(dateStr) {
+            if (!dateStr) return null;
+            const dateObj = new Date(dateStr);
+            if (isNaN(dateObj.getTime())) return null;
+            const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            return `${String(dateObj.getDate()).padStart(2, '0')} ${months[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+        }
+
+        function updatePreview() {
             const show = document.getElementById('inShow').value || "[NAMA SHOW]";
             const rawDate = document.getElementById('inDate').value;
             const formattedDate = formatIndoDate(rawDate) || "[TANGGAL]";
             const time = document.getElementById('inTime').value || "[JAM]";
+            
             const mainLink = isManualMode ? document.getElementById('inMain').value : (activeLink || "[LINK UTAMA]");
             const pass = document.getElementById('inPass').value || "[SANDI]";
 
@@ -201,7 +376,7 @@
 
 1️⃣ Link Utama: 🔗 ${mainLink}
 
-🔗Replay ${formattedDate} : https://48realtime.github.io/Replay-Show/
+🔗Replay ${formattedDate} : ${REPLAY_BASE_URL}
 🗝️ Sandi : ${pass}
 
 📧*Cara akses Live Chat* :
@@ -209,77 +384,28 @@
 
 ⚠️ *PENTING UNTUK DIPERHATIKAN*:
 1 Akun = 1 Device/browser : Jangan login di dua perangkat bersamaan.
-Waktu Akses: Disarankan masuk website saat live sudah dimulai.
+Waktu Akses: Disarankan masuk website saat live sudah dimulai (Cek info terbaru di saluran).
 Browser: Gunakan Chrome atau Opera untuk pengalaman terbaik.
+Kendala Akses: Jika tombol masuk tidak berfungsi, mohon matikan AdBlock/DNS AdGuard.
 
 Jika ada kendala, segera hubungi Admin. Selamat menonton! ✨`;
 
             document.getElementById('formattedOutput').innerText = template;
-        };
+        }
 
-        const formatIndoDate = (dateStr) => {
-            if (!dateStr) return null;
-            const dateObj = new Date(dateStr);
-            const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-            return `${String(dateObj.getDate()).padStart(2, '0')} ${months[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
-        };
-
-        window.handleIdentifierChange = () => {
-            const show = document.getElementById('inShow').value;
-            const date = document.getElementById('inDate').value;
-            const idInfo = document.getElementById('idInfo');
-            const view = document.getElementById('linkDatabaseView');
-            const counter = document.getElementById('linkCounter');
-
-            if (show && date) {
-                const key = `${show}|${date}`;
-                idInfo.innerText = `ID: ${key}`;
-                const links = currentCloudData[key] || [];
-                counter.innerText = `Sisa Link: ${links.length}`;
-                
-                if (links.length > 0) {
-                    activeLink = links[0];
-                    if (!isManualMode) document.getElementById('inMain').value = activeLink;
-                } else {
-                    activeLink = "";
-                    if (!isManualMode) document.getElementById('inMain').value = "";
-                }
-
-                view.innerHTML = links.map((l, i) => `
-                    <div class="p-1 truncate ${i === 0 ? 'text-blue-600 font-bold bg-blue-50' : ''}">
-                        ${i + 1}. ${l}
-                    </div>
-                `).join('') || "<span class='text-orange-500'>Link Habis / Gunakan Manual</span>";
-            } else {
-                idInfo.innerText = "";
-                view.innerHTML = "Pilih show & tanggal...";
-                counter.innerText = "Sisa Link: 0";
-            }
-            updatePreview();
-        };
-
-        window.useNextLink = () => {
-            const show = document.getElementById('inShow').value;
-            const date = document.getElementById('inDate').value;
-            const key = `${show}|${date}`;
-            if (currentCloudData[key] && currentCloudData[key].length > 1) {
-                const links = [...currentCloudData[key]];
-                const first = links.shift();
-                links.push(first);
-                updateCloud(key, links);
-            }
-        };
-
-        window.copyAndConsume = async () => {
+        function copyAndConsume() {
             const show = document.getElementById('inShow').value;
             const date = document.getElementById('inDate').value;
             const key = `${show}|${date}`;
             const text = document.getElementById('formattedOutput').innerText;
+            
             const currentLink = isManualMode ? document.getElementById('inMain').value : activeLink;
+            if (!currentLink || currentLink.includes("[")) {
+                alert("Mohon lengkapi data dan pastikan link tersedia!");
+                return;
+            }
 
-            if (!currentLink || currentLink.includes("[")) return;
-
-            // Copy to clipboard
+            // Copy Action
             const dummy = document.createElement("textarea");
             document.body.appendChild(dummy);
             dummy.value = text;
@@ -287,85 +413,36 @@ Jika ada kendala, segera hubungi Admin. Selamat menonton! ✨`;
             document.execCommand("copy");
             document.body.removeChild(dummy);
 
-            // Cloud consumption
-            if (!isManualMode && currentCloudData[key] && currentCloudData[key].length > 0) {
-                const updatedLinks = [...currentCloudData[key]];
-                updatedLinks.shift();
-                await updateCloud(key, updatedLinks);
+            // LOGIKA HAPUS PERMANEN (Hanya jika mode AUTO)
+            if (!isManualMode && linkDatabase[key]) {
+                // Hapus item pertama (link yang baru saja disalin)
+                linkDatabase[key].shift();
+                
+                // Simpan perubahan ke LocalStorage secara permanen
+                saveToStorage();
+                
+                // Refresh UI
+                handleIdentifierChange();
+                showToast("Link dihapus dari database!");
+            } else {
+                showToast("Berhasil disalin!");
             }
+        }
 
+        function showToast(msg) {
             const toast = document.getElementById('toast');
+            if(msg) toast.innerText = msg;
             toast.style.opacity = '1';
-            setTimeout(() => toast.style.opacity = '0', 3000);
+            setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+        }
+
+        window.onload = () => {
+            initDatabase(); // Load data dari storage
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('inDate').value = today;
+            toggleLinkMode(); 
+            handleIdentifierChange();
         };
-
-        const updateCloud = async (key, newList) => {
-            if (!currentUser) return;
-            try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'links_collection', 'main_links');
-                // Gunakan updateDoc untuk menghindari penulisan ulang seluruh data jika tidak perlu
-                await updateDoc(docRef, { [key]: newList });
-            } catch (e) {
-                console.error("Gagal mengupdate cloud:", e);
-            }
-        };
-
-        window.resetLinks = async () => {
-            if (!currentUser) return;
-            if (confirm("Reset database? Semua link akan kembali seperti codingan awal.")) {
-                try {
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'links_collection', 'main_links');
-                    await setDoc(docRef, initialLinks);
-                } catch (e) {
-                    console.error("Gagal reset cloud:", e);
-                }
-            }
-        };
-
-        // Pola Autentikasi yang Benar (RULE 3)
-        const startApp = async () => {
-            try {
-                // 1. Jalankan Autentikasi TERLEBIH DAHULU
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                // 2. Tunggu perubahan status auth
-                onAuthStateChanged(auth, (user) => {
-                    currentUser = user;
-                    if (user) {
-                        // 3. Hanya jalankan query Firestore SETELAH user terautentikasi
-                        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'links_collection', 'main_links');
-                        onSnapshot(docRef, (docSnap) => {
-                            if (docSnap.exists()) {
-                                currentCloudData = docSnap.data();
-                            } else {
-                                // Inisialisasi jika dokumen belum ada
-                                setDoc(docRef, initialLinks);
-                                currentCloudData = initialLinks;
-                            }
-                            document.getElementById('loader').style.display = 'none';
-                            handleIdentifierChange();
-                        }, (err) => {
-                            console.error("Firestore Error:", err);
-                            // Tetap hilangkan loader meski error agar user bisa input manual
-                            document.getElementById('loader').style.display = 'none';
-                        });
-                    }
-                });
-            } catch (error) {
-                console.error("Inisialisasi Gagal:", error);
-                document.getElementById('loader').style.display = 'none';
-            }
-        };
-
-        // Jalankan Inisialisasi
-        window.onload = startApp;
-
-        // Default Date
-        document.getElementById('inDate').value = new Date().toISOString().split('T')[0];
     </script>
 </body>
 </html>
